@@ -10,7 +10,7 @@ let isRunning = false;
 const display = document.getElementById('display');
 const mainBtn = document.getElementById('mainBtn');
 const resetBtn = document.getElementById('resetBtn');
-const mainText = document.getElementById('mainText');
+const mainIcon = document.getElementById('mainIcon');
 const mainCard = document.getElementById('mainCard');
 const titleInput = document.getElementById('sessionTitleInput');
 
@@ -26,18 +26,145 @@ function getUniqueDefaultName() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
+    // --- تهيئة الثيم وتحديث مصدر الصورة بناءً على الوضع الحالي ---
+    const savedTheme = localStorage.getItem("sard_user_theme");
+    const themeIconImg = document.getElementById("themeIconImg");
+    
+    if (savedTheme === "light") {
+        document.body.classList.add("light-mode");
+        if (themeIconImg) {
+            themeIconImg.src = "Dark_Mode.png";
+        }
+    } else {
+        if (themeIconImg) {
+            themeIconImg.src = "Light_Mode.png";
+        }
+    }
+
     let sessions = JSON.parse(localStorage.getItem('sard_sessions') || '[]');
     if (sessions.length > 0) {
         loadSession(sessions[0].id);
     } else {
-        createNewSession();
+        createNewSession(true);
     }
 });
 
-function createNewSession() {
+// --- دالة تبديل الثيم اليدوي وتحديث الصورة ---
+function toggleAppTheme() {
+    const body = document.body;
+    const themeIconImg = document.getElementById("themeIconImg");
+    
+    body.classList.toggle("light-mode");
+    
+    if (body.classList.contains("light-mode")) {
+        localStorage.setItem("sard_user_theme", "light");
+        if (themeIconImg) {
+            themeIconImg.src = "Dark_Mode.png";
+        }
+    } else {
+        localStorage.setItem("sard_user_theme", "dark");
+        if (themeIconImg) {
+            themeIconImg.src = "Light_Mode.png";
+        }
+    }
+}
+
+// --- دوال النوافذ المنبثقة المخصصة ---
+function showCustomPrompt(title, defaultValue, onConfirm) {
+    const overlay = document.getElementById('customModalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMsg = document.getElementById('modalMessage');
+    const container = document.getElementById('modalContentContainer');
+    const cancelBtn = document.getElementById('modalCancelBtn');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+
+    modalTitle.innerText = title;
+    modalMsg.style.display = 'none';
+    container.innerHTML = `<input type="text" id="customModalInput" class="modal-input" value="${defaultValue}">`;
+    
+    confirmBtn.className = 'modal-btn modal-btn-confirm';
+    confirmBtn.innerText = 'موافق';
+    cancelBtn.innerText = 'إلغاء';
+
+    overlay.classList.add('active');
+    const input = document.getElementById('customModalInput');
+    input.focus();
+    input.select();
+
+    const newCancel = cancelBtn.cloneNode(true);
+    const newConfirm = confirmBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+    newCancel.onclick = () => {
+        overlay.classList.remove('active');
+    };
+
+    const submit = () => {
+        const val = input.value.trim();
+        overlay.classList.remove('active');
+        if (val !== '') {
+            onConfirm(val);
+        }
+    };
+
+    newConfirm.onclick = submit;
+    input.onkeydown = (e) => {
+        if (e.key === 'Enter') submit();
+    };
+}
+
+function showCustomConfirm(title, message, isDanger, onConfirm) {
+    const overlay = document.getElementById('customModalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMsg = document.getElementById('modalMessage');
+    const container = document.getElementById('modalContentContainer');
+    const cancelBtn = document.getElementById('modalCancelBtn');
+    const confirmBtn = document.getElementById('modalConfirmBtn');
+
+    modalTitle.innerText = title;
+    modalMsg.style.display = 'block';
+    modalMsg.innerText = message;
+    container.innerHTML = '';
+
+    confirmBtn.className = `modal-btn ${isDanger ? 'modal-btn-danger' : 'modal-btn-confirm'}`;
+    confirmBtn.innerText = 'تأكيد';
+    cancelBtn.innerText = 'إلغاء';
+
+    overlay.classList.add('active');
+
+    const newCancel = cancelBtn.cloneNode(true);
+    const newConfirm = confirmBtn.cloneNode(true);
+    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+    newCancel.onclick = () => {
+        overlay.classList.remove('active');
+    };
+
+    newConfirm.onclick = () => {
+        overlay.classList.remove('active');
+        onConfirm();
+    };
+}
+// ------------------------------------------
+
+function createNewSession(isInitialLoad = false) {
+    let newName = getUniqueDefaultName();
+    
+    if (!isInitialLoad) {
+        showCustomPrompt("أدخل اسم الحلقة الجديدة:", newName, (userInput) => {
+            executeCreateSession(userInput);
+        });
+    } else {
+        executeCreateSession(newName);
+    }
+}
+
+function executeCreateSession(name) {
     if (isRunning) toggleStopwatch();
     currentSessionId = Date.now();
-    titleInput.value = getUniqueDefaultName();
+    titleInput.value = name;
     scores = { mistakes: 0, prompts: 0 };
     document.getElementById('mistakes').innerText = '0';
     document.getElementById('prompts').innerText = '0';
@@ -56,8 +183,12 @@ function resetStopwatchStateOnly() {
     display.innerHTML = '00:00:00<span class="ms">.00</span>';
     mainBtn.classList.remove('pause-state');
     mainBtn.classList.add('play-state');
-    mainText.innerHTML = 'بدء';
+    mainIcon.className = 'icon-mask start-icon';
     mainCard.classList.remove('running-glow', 'paused-glow');
+
+    if (window.AndroidBridge) {
+        window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
+    }
 }
 
 function autoSave() {
@@ -100,12 +231,16 @@ function handleTitleChange() {
         titleInput.value = newval;
     }
     autoSave();
+    
+    if (window.AndroidBridge) {
+        window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
+    }
 }
 
 function runTimer() {
     if (!isRunning) return;
     
-    let currentTime = performance.now();
+    let currentTime = Date.now();
     difference = elapsedBeforePause + (currentTime - startTime);
 
     let hours = Math.floor(difference / (1000 * 60 * 60));
@@ -128,6 +263,10 @@ function runTimer() {
         }
     }
 
+    if (window.AndroidBridge) {
+        window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
+    }
+
     timerAnimationId = requestAnimationFrame(runTimer);
 }
 
@@ -135,12 +274,12 @@ function toggleStopwatch() {
     animateButton(mainBtn);
     if (!isRunning) {
         isRunning = true;
-        startTime = performance.now();
+        startTime = Date.now();
         timerAnimationId = requestAnimationFrame(runTimer);
         
         mainBtn.classList.remove('play-state');
         mainBtn.classList.add('pause-state');
-        mainText.innerHTML = 'إيقاف';
+        mainIcon.className = 'icon-mask stop-icon';
         
         mainCard.classList.remove('paused-glow');
         mainCard.classList.add('running-glow');
@@ -151,10 +290,14 @@ function toggleStopwatch() {
         
         mainBtn.classList.remove('pause-state');
         mainBtn.classList.add('play-state');
-        mainText.innerHTML = 'إكمال';
+        mainIcon.className = 'icon-mask start-icon';
         
         mainCard.classList.remove('running-glow');
         mainCard.classList.add('paused-glow');
+
+        if (window.AndroidBridge) {
+            window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
+        }
     }
     autoSave();
     if (document.getElementById('sidebar').classList.contains('active')) {
@@ -162,13 +305,61 @@ function toggleStopwatch() {
     }
 }
 
+window.toggleStopwatch = toggleStopwatch;
+
+window.syncWithAndroid = function(savedTimeMillis, androidIsRunning) {
+    if (savedTimeMillis > 0) {
+        difference = savedTimeMillis;
+        elapsedBeforePause = savedTimeMillis;
+
+        let hours = Math.floor(difference / (1000 * 60 * 60));
+        let minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        let seconds = Math.floor((difference % (1000 * 60)) / 1000);
+        let milliseconds = Math.floor((difference % 1000) / 10); 
+
+        let hStr = (hours < 10) ? "0" + hours : hours;
+        let mStr = (minutes < 10) ? "0" + minutes : minutes;
+        let sStr = (seconds < 10) ? "0" + seconds : seconds;
+        let msStr = (milliseconds < 10) ? "0" + milliseconds : milliseconds;
+
+        display.innerHTML = hStr + ':' + mStr + ':' + sStr + '<span class="ms">.' + msStr + '</span>';
+    }
+    
+    if (androidIsRunning && !isRunning) {
+        isRunning = true;
+        startTime = Date.now();
+        if (timerAnimationId) cancelAnimationFrame(timerAnimationId);
+        timerAnimationId = requestAnimationFrame(runTimer);
+        
+        mainBtn.classList.remove('play-state');
+        mainBtn.classList.add('pause-state');
+        mainIcon.className = 'icon-mask stop-icon';
+        
+        mainCard.classList.remove('paused-glow');
+        mainCard.classList.add('running-glow');
+    } 
+    else if (!androidIsRunning && isRunning) {
+        isRunning = false;
+        if (timerAnimationId) cancelAnimationFrame(timerAnimationId);
+        
+        mainBtn.classList.remove('pause-state');
+        mainBtn.classList.add('play-state');
+        mainIcon.className = 'icon-mask start-icon';
+        
+        mainCard.classList.remove('running-glow');
+        mainCard.classList.add('paused-glow');
+    }
+};
+
 function resetStopwatch() {
     animateButton(resetBtn);
-    resetStopwatchStateOnly();
-    autoSave();
-    if (document.getElementById('sidebar').classList.contains('active')) {
-        loadSessionsHistory();
-    }
+    showCustomConfirm("تصفير العداد", "هل أنت متأكد من تصفير العداد؟ سيتم مسح الوقت الحالي.", true, () => {
+        resetStopwatchStateOnly();
+        autoSave();
+        if (document.getElementById('sidebar').classList.contains('active')) {
+            loadSessionsHistory();
+        }
+    });
 }
 
 function animateButton(btn) {
@@ -236,7 +427,9 @@ function loadSessionsHistory() {
         let rawTime = s.time.split('<span')[0].trim();
 
         item.innerHTML = `
-            <button class="del-session" onclick="event.stopPropagation(); deleteSession(${s.id})" title="حذف">حذف</button>
+            <button class="del-session" onclick="event.stopPropagation(); confirmDeleteSession(${s.id})" title="حذف">
+                <i class="icon-mask delete-icon"></i>
+            </button>
             <div class="session-item-title">${s.title} ${liveIndicator}</div>
             <div class="session-item-details">
                 <span>الزمن: <span id="sidebar-time-${s.id}">${rawTime}</span></span>
@@ -247,6 +440,12 @@ function loadSessionsHistory() {
         `;
         item.onclick = () => loadSession(s.id);
         container.appendChild(item);
+    });
+}
+
+function confirmDeleteSession(id) {
+    showCustomConfirm("حذف الجلسة", "هل أنت متأكد من رغبتك في حذف هذه الجلسة من السجل نهائياً؟", true, () => {
+        deleteSession(id);
     });
 }
 
@@ -283,6 +482,10 @@ function loadSession(id) {
     if(document.getElementById('sidebar').classList.contains('active')) {
         toggleSidebar();
     }
+    
+    if (window.AndroidBridge) {
+        window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
+    }
 }
 
 function deleteSession(id) {
@@ -303,7 +506,7 @@ function deleteSession(id) {
 function takeScreenshot() {
     const captureElement = document.getElementById('captureArea');
     html2canvas(captureElement, {
-        backgroundColor: '#0b1120',
+        backgroundColor: document.body.classList.contains('light-mode') ? '#f1f5f9' : '#0b1120',
         scale: 2
     }).then(canvas => {
         const link = document.createElement('a');

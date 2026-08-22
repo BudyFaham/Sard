@@ -11,8 +11,13 @@
 <body>
 
     <div class="navbar">
-        <div class="brand-logo" onclick="toggleSidebar()" title="عرض السجل">
-            <span>السجل</span>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <div class="brand-logo" onclick="toggleSidebar()" title="عرض السجل">
+                <i class="icon-mask history-icon"></i>
+            </div>
+            <div class="brand-logo" onclick="createNewSession()" title="حلقة جديدة">
+                <i class="icon-mask add-icon"></i>
+            </div>
         </div>
         
         <div class="session-title-container">
@@ -20,7 +25,14 @@
         </div>
 
         <div class="action-top-btns">
-            <button class="btn-top" onclick="takeScreenshot()" style="border-color: var(--accent-gold); color: var(--accent-gold);">الحفظ كصورة</button>
+            <!-- زر تبديل الوضع الليلي / النهاري باستخدام صورة عادية -->
+            <button class="btn-top" id="themeToggleBtn" onclick="toggleAppTheme()" title="تغيير الوضع">
+                <img src="Dark_Mode.png" id="themeIconImg" class="theme-toggle-img" alt="وضع التبديل">
+            </button>
+
+            <button class="btn-top" onclick="takeScreenshot()" style="border-color: var(--accent-gold); color: var(--accent-gold); display: flex; align-items: center; justify-content: center;" title="الحفظ كصورة">
+                <i class="icon-mask save-icon"></i>
+            </button>
         </div>
     </div>
 
@@ -34,12 +46,12 @@
                 </div>
                 
                 <div class="controls">
-                    <button id="mainBtn" class="btn-circle play-state" onclick="toggleStopwatch()">
-                        <span id="mainText">بدء</span>
+                    <button id="mainBtn" class="btn-circle play-state" onclick="toggleStopwatch()" title="بدء / إيقاف">
+                        <i id="mainIcon" class="icon-mask start-icon"></i>
                     </button>
                     
-                    <button id="resetBtn" class="btn-circle btn-reset" onclick="resetStopwatch()">
-                        <span>تصفير</span>
+                    <button id="resetBtn" class="btn-circle btn-reset" onclick="resetStopwatch()" title="تصفير">
+                        <i class="icon-mask restart-icon"></i>
                     </button>
                 </div>
             </div>
@@ -69,11 +81,23 @@
         <div class="sidebar-header">
             <h3>السجل</h3>
             <div class="header-actions">
-                <button class="btn-new-session" onclick="createNewSession()">+ حلقة جديدة</button>
                 <button class="close-sidebar" onclick="toggleSidebar()">&times;</button>
             </div>
         </div>
         <div class="sessions-list" id="sessionsList">
+        </div>
+    </div>
+
+    <!-- النافذة المنبثقة المخصصة (Custom Modal) -->
+    <div class="custom-modal-overlay" id="customModalOverlay">
+        <div class="custom-modal" id="customModal">
+            <h3 id="modalTitle">عنوان النافذة</h3>
+            <p id="modalMessage" style="color: var(--text-muted); font-size: 13px; margin-bottom: 15px; display: none; line-height: 1.5;"></p>
+            <div id="modalContentContainer"></div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-cancel" id="modalCancelBtn">إلغاء</button>
+                <button class="modal-btn modal-btn-confirm" id="modalConfirmBtn">موافق</button>
+            </div>
         </div>
     </div>
 
