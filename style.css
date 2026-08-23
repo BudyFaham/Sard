@@ -1,3 +1,7 @@
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
 :root {
     --bg-body: #0b1120;
     --bg-card: rgba(30, 41, 59, 0.85);
@@ -9,16 +13,15 @@
     --text-muted: #94a3b8;
 }
 
-/* تخصيص الوضع الفاتح اليدوي */
-/* الوضع الفاتح المريح للعين (درجات هادئة وغير فاقعة) */
+/* الوضع الفاتح المريح للعين */
 body.light-mode {
-    --bg-body: #e4e9f0; /* خلفية رمادية فاتحة وهادئة جداً وليست بيضاء فاقعة */
-    --bg-card: rgba(250, 252, 255, 0.95); /* كاردات بلون أوف-وايت ناعم مريح للعين */
+    --bg-body: #e4e9f0;
+    --bg-card: rgba(250, 252, 255, 0.95);
     --accent-cyan: #0284c7;
     --accent-green: #15803d;
     --accent-red: #be123c;
     --accent-gold: #b45309;
-    --text-main: #1e293b; /* نص داكن غير حاد لتقليل الإجهاد البصري */
+    --text-main: #1e293b;
     --text-muted: #64748b;
 }
 
@@ -44,7 +47,6 @@ body {
     min-height: 100vh;
     touch-action: manipulation;
     padding: 15px;
-    box-sizing: border-box;
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
@@ -68,10 +70,9 @@ body {
 .save-icon { -webkit-mask-image: url('Save.png'); mask-image: url('Save.png'); width: 20px; height: 20px; }
 .delete-icon { -webkit-mask-image: url('Delete.png'); mask-image: url('Delete.png'); width: 16px; height: 16px; color: var(--accent-red); }
 
-/* تنسيق أيقونة الوضع الليلي / النهاري كصورة حقيقية */
 .theme-toggle-img {
-    width: 24px !important; /* التعديل: إجبار الحجم */
-    height: 24px !important; /* التعديل: إجبار الحجم */
+    width: 24px !important;
+    height: 24px !important;
     max-width: 24px;
     object-fit: contain;
     display: block;
@@ -79,7 +80,7 @@ body {
 
 .navbar {
     width: 100%;
-    max-width: 480px; /* التعديل: تضييق العرض */
+    max-width: 520px; /* التعديل الجذري: زيادة العرض ليطابق الكروت بدقة */
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -158,7 +159,7 @@ body {
 
 .capture-area {
     width: 100%;
-    max-width: 480px; /* التعديل: تضييق العرض */
+    max-width: 520px; /* التعديل الجذري: زيادة العرض ليطابق البار العلوي */
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -322,7 +323,6 @@ h2 { margin-top: 0; margin-bottom: 15px; color: var(--accent-cyan); font-weight:
     display: flex;
     flex-direction: column;
     transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-sizing: border-box;
     padding: 20px;
 }
 
@@ -452,7 +452,6 @@ h2 { margin-top: 0; margin-bottom: 15px; color: var(--accent-cyan); font-weight:
     font-weight: bold;
     text-align: center;
     outline: none;
-    box-sizing: border-box;
     font-family: inherit;
     margin-bottom: 20px;
 }
