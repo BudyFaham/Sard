@@ -26,7 +26,6 @@ function getUniqueDefaultName() {
 }
 
 window.addEventListener('DOMContentLoaded', () => {
-    // --- تهيئة الثيم وتحديث مصدر الصورة بناءً على الوضع الحالي ---
     const savedTheme = localStorage.getItem("sard_user_theme");
     const themeIconImg = document.getElementById("themeIconImg");
     
@@ -49,7 +48,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 });
 
-// --- دالة تبديل الثيم اليدوي وتحديث الصورة ---
 function toggleAppTheme() {
     const body = document.body;
     const themeIconImg = document.getElementById("themeIconImg");
@@ -69,7 +67,6 @@ function toggleAppTheme() {
     }
 }
 
-// --- دوال النوافذ المنبثقة المخصصة ---
 function showCustomPrompt(title, defaultValue, onConfirm) {
     const overlay = document.getElementById('customModalOverlay');
     const modalTitle = document.getElementById('modalTitle');
@@ -147,7 +144,6 @@ function showCustomConfirm(title, message, isDanger, onConfirm) {
         onConfirm();
     };
 }
-// ------------------------------------------
 
 function createNewSession(isInitialLoad = false) {
     let newName = getUniqueDefaultName();
@@ -185,10 +181,6 @@ function resetStopwatchStateOnly() {
     mainBtn.classList.add('play-state');
     mainIcon.className = 'icon-mask start-icon';
     mainCard.classList.remove('running-glow', 'paused-glow');
-
-    if (window.AndroidBridge) {
-        window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
-    }
 }
 
 function autoSave() {
@@ -231,10 +223,6 @@ function handleTitleChange() {
         titleInput.value = newval;
     }
     autoSave();
-    
-    if (window.AndroidBridge) {
-        window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
-    }
 }
 
 function runTimer() {
@@ -263,10 +251,6 @@ function runTimer() {
         }
     }
 
-    if (window.AndroidBridge) {
-        window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
-    }
-
     timerAnimationId = requestAnimationFrame(runTimer);
 }
 
@@ -281,7 +265,7 @@ function toggleStopwatch() {
         mainBtn.classList.add('pause-state');
         mainIcon.className = 'icon-mask stop-icon';
         
-        mainCard.classList.remove('paused-glow');
+        mainCard.classList.remove('running-glow');
         mainCard.classList.add('running-glow');
     } else {
         isRunning = false;
@@ -294,10 +278,6 @@ function toggleStopwatch() {
         
         mainCard.classList.remove('running-glow');
         mainCard.classList.add('paused-glow');
-
-        if (window.AndroidBridge) {
-            window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
-        }
     }
     autoSave();
     if (document.getElementById('sidebar').classList.contains('active')) {
@@ -306,50 +286,6 @@ function toggleStopwatch() {
 }
 
 window.toggleStopwatch = toggleStopwatch;
-
-window.syncWithAndroid = function(savedTimeMillis, androidIsRunning) {
-    if (savedTimeMillis > 0) {
-        difference = savedTimeMillis;
-        elapsedBeforePause = savedTimeMillis;
-
-        let hours = Math.floor(difference / (1000 * 60 * 60));
-        let minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-        let seconds = Math.floor((difference % (1000 * 60)) / 1000);
-        let milliseconds = Math.floor((difference % 1000) / 10); 
-
-        let hStr = (hours < 10) ? "0" + hours : hours;
-        let mStr = (minutes < 10) ? "0" + minutes : minutes;
-        let sStr = (seconds < 10) ? "0" + seconds : seconds;
-        let msStr = (milliseconds < 10) ? "0" + milliseconds : milliseconds;
-
-        display.innerHTML = hStr + ':' + mStr + ':' + sStr + '<span class="ms">.' + msStr + '</span>';
-    }
-    
-    if (androidIsRunning && !isRunning) {
-        isRunning = true;
-        startTime = Date.now();
-        if (timerAnimationId) cancelAnimationFrame(timerAnimationId);
-        timerAnimationId = requestAnimationFrame(runTimer);
-        
-        mainBtn.classList.remove('play-state');
-        mainBtn.classList.add('pause-state');
-        mainIcon.className = 'icon-mask stop-icon';
-        
-        mainCard.classList.remove('paused-glow');
-        mainCard.classList.add('running-glow');
-    } 
-    else if (!androidIsRunning && isRunning) {
-        isRunning = false;
-        if (timerAnimationId) cancelAnimationFrame(timerAnimationId);
-        
-        mainBtn.classList.remove('pause-state');
-        mainBtn.classList.add('play-state');
-        mainIcon.className = 'icon-mask start-icon';
-        
-        mainCard.classList.remove('running-glow');
-        mainCard.classList.add('paused-glow');
-    }
-};
 
 function resetStopwatch() {
     animateButton(resetBtn);
@@ -481,10 +417,6 @@ function loadSession(id) {
 
     if(document.getElementById('sidebar').classList.contains('active')) {
         toggleSidebar();
-    }
-    
-    if (window.AndroidBridge) {
-        window.AndroidBridge.updateNotification(titleInput.value, difference, isRunning);
     }
 }
 

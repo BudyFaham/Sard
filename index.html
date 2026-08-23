@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>أكاديمية السرد - لوحة التحكم الذكية</title>
     
+    <!-- أيقونة التبويب في المتصفح -->
+    <link rel="icon" type="image/png" href="Sard.png">
+    
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
@@ -25,7 +28,6 @@
         </div>
 
         <div class="action-top-btns">
-            <!-- زر تبديل الوضع الليلي / النهاري باستخدام صورة عادية -->
             <button class="btn-top" id="themeToggleBtn" onclick="toggleAppTheme()" title="تغيير الوضع">
                 <img src="Dark_Mode.png" id="themeIconImg" class="theme-toggle-img" alt="وضع التبديل">
             </button>
@@ -88,7 +90,6 @@
         </div>
     </div>
 
-    <!-- النافذة المنبثقة المخصصة (Custom Modal) -->
     <div class="custom-modal-overlay" id="customModalOverlay">
         <div class="custom-modal" id="customModal">
             <h3 id="modalTitle">عنوان النافذة</h3>
