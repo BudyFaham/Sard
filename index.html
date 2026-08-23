@@ -102,6 +102,16 @@
         </div>
     </div>
 
+    <!-- نافذة عرض الصورة لمتصفحات التطبيقات (ماسنجر وغيره) -->
+    <div class="image-modal-overlay" id="imageModalOverlay" onclick="closeImageModal()">
+        <div class="image-modal" onclick="event.stopPropagation()">
+            <h3>تم التقاط الصورة بنجاح</h3>
+            <p>اضغط مطولاً على الصورة لحفظها في جهازك</p>
+            <img id="previewImage" src="" alt="لقطة الشاشة">
+            <button class="modal-btn modal-btn-cancel" onclick="closeImageModal()" style="margin-top: 15px; width: 100%;">إغلاق</button>
+        </div>
+    </div>
+
     <script src="script.js" defer></script>
 </body>
 </html>

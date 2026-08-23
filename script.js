@@ -435,15 +435,40 @@ function deleteSession(id) {
     }
 }
 
+// دالة لمعرفة متصفحات التطبيقات المدمجة (ماسنجر، فيسبوك، إنستجرام)
+function isAppBrowser() {
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    return (ua.indexOf("FBAN") > -1) || 
+           (ua.indexOf("FBAV") > -1) || 
+           (ua.indexOf("Instagram") > -1) || 
+           (ua.indexOf("Messenger") > -1);
+}
+
+// دالة لإغلاق نافذة عرض الصورة
+function closeImageModal() {
+    document.getElementById('imageModalOverlay').classList.remove('active');
+}
+
+// دالة التقاط الصورة الذكية
 function takeScreenshot() {
     const captureElement = document.getElementById('captureArea');
+    
     html2canvas(captureElement, {
         backgroundColor: document.body.classList.contains('light-mode') ? '#f1f5f9' : '#0b1120',
         scale: 2
     }).then(canvas => {
-        const link = document.createElement('a');
-        link.download = 'sard-session-' + Date.now() + '.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        const imgData = canvas.toDataURL('image/png');
+        
+        if (isAppBrowser()) {
+            // عرض الصورة في نافذة للمتصفحات المدمجة
+            document.getElementById('previewImage').src = imgData;
+            document.getElementById('imageModalOverlay').classList.add('active');
+        } else {
+            // التحميل المباشر للمتصفحات العادية
+            const link = document.createElement('a');
+            link.download = 'sard-session-' + Date.now() + '.png';
+            link.href = imgData;
+            link.click();
+        }
     });
 }
