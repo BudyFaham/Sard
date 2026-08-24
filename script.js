@@ -437,9 +437,67 @@ function deleteSession(id) {
 
 function takeScreenshot() {
     const captureElement = document.getElementById('captureArea');
+    
     html2canvas(captureElement, {
-        backgroundColor: document.body.classList.contains('light-mode') ? '#f1f5f9' : '#0b1120',
-        scale: 2
+        backgroundColor: document.body.classList.contains('light-mode') ? '#e4e9f0' : '#0b1120',
+        scale: 2,
+        onclone: (clonedDoc) => {
+            // 1. تعديل مظهر زر المؤقت والكارت ليدلا على حالة الإيقاف في الصورة فقط
+            const clonedMainBtn = clonedDoc.getElementById('mainBtn');
+            const clonedMainCard = clonedDoc.getElementById('mainCard');
+
+            if (clonedMainBtn) {
+                clonedMainBtn.classList.remove('pause-state');
+                clonedMainBtn.classList.add('play-state');
+            }
+            if (clonedMainCard) {
+                clonedMainCard.classList.remove('running-glow');
+                clonedMainCard.classList.add('paused-glow');
+            }
+
+            // 2. تحويل أيقونات الـ CSS Mask إلى صور صريحة لمنع ظهور المربعات
+            const iconMappings = {
+                'start-icon': 'Start.png',
+                'stop-icon': 'Start.png', // إظهار أيقونة التشغيل الخضراء في الصورة
+                'restart-icon': 'Restart.png',
+                'save-icon': 'Save.png',
+                'history-icon': 'History.png',
+                'add-icon': 'Add.png',
+                'delete-icon': 'Delete.png'
+            };
+
+            const maskedIcons = clonedDoc.querySelectorAll('.icon-mask');
+            maskedIcons.forEach(icon => {
+                let matchedSrc = null;
+
+                if (icon.id === 'mainIcon') {
+                    matchedSrc = 'Start.png';
+                } else {
+                    for (const [className, src] of Object.entries(iconMappings)) {
+                        if (icon.classList.contains(className)) {
+                            matchedSrc = src;
+                            break;
+                        }
+                    }
+                }
+
+                if (matchedSrc) {
+                    icon.style.webkitMaskImage = 'none';
+                    icon.style.maskImage = 'none';
+                    icon.style.backgroundColor = 'transparent';
+
+                    const img = clonedDoc.createElement('img');
+                    img.src = matchedSrc;
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'contain';
+                    img.style.display = 'block';
+
+                    icon.innerHTML = '';
+                    icon.appendChild(img);
+                }
+            });
+        }
     }).then(canvas => {
         const link = document.createElement('a');
         link.download = 'sard-session-' + Date.now() + '.png';
