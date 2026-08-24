@@ -435,12 +435,33 @@ function deleteSession(id) {
     }
 }
 
-function takeScreenshot() {
+async function takeScreenshot() {
     const captureElement = document.getElementById('captureArea');
     
+    // قائمة بجميع أصول الأيقونات
+    const imageList = ['Start.png', 'Restart.png', 'Save.png', 'History.png', 'Add.png', 'Delete.png'];
+    const imageCache = {};
+
+    // تحويل كل صورة إلى Data URL مسبقاً قبل التقاط الشاشة
+    await Promise.all(imageList.map(async (src) => {
+        try {
+            const res = await fetch(src);
+            const blob = await res.blob();
+            imageCache[src] = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) {
+            imageCache[src] = src;
+        }
+    }));
+
     html2canvas(captureElement, {
         backgroundColor: document.body.classList.contains('light-mode') ? '#e4e9f0' : '#0b1120',
         scale: 2,
+        useCORS: true,
+        allowTaint: true,
         onclone: (clonedDoc) => {
             // 1. تعديل مظهر زر المؤقت والكارت ليدلا على حالة الإيقاف في الصورة فقط
             const clonedMainBtn = clonedDoc.getElementById('mainBtn');
@@ -455,10 +476,10 @@ function takeScreenshot() {
                 clonedMainCard.classList.add('paused-glow');
             }
 
-            // 2. تحويل أيقونات الـ CSS Mask إلى صور صريحة لمنع ظهور المربعات
+            // 2. استبدال الـ Mask بأيقونات جاهزة بصيغة Base64
             const iconMappings = {
                 'start-icon': 'Start.png',
-                'stop-icon': 'Start.png', // إظهار أيقونة التشغيل الخضراء في الصورة
+                'stop-icon': 'Start.png',
                 'restart-icon': 'Restart.png',
                 'save-icon': 'Save.png',
                 'history-icon': 'History.png',
@@ -481,13 +502,13 @@ function takeScreenshot() {
                     }
                 }
 
-                if (matchedSrc) {
+                if (matchedSrc && imageCache[matchedSrc]) {
                     icon.style.webkitMaskImage = 'none';
                     icon.style.maskImage = 'none';
                     icon.style.backgroundColor = 'transparent';
 
                     const img = clonedDoc.createElement('img');
-                    img.src = matchedSrc;
+                    img.src = imageCache[matchedSrc];
                     img.style.width = '100%';
                     img.style.height = '100%';
                     img.style.objectFit = 'contain';
