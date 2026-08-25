@@ -438,48 +438,74 @@ function deleteSession(id) {
 function takeScreenshot() {
     const captureElement = document.getElementById('captureArea');
     
-    // أيقونات SVG بمعايير صريحة (xmlns و width و height) لضمان رسمها بواسطة html2canvas
-    const svgIcons = {
-        'start-icon': `<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="#4ade80"><path d="M8 5v14l11-7z"/></svg>`,
-        'stop-icon': `<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="#f43f5e"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`,
-        'restart-icon': `<svg xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="#94a3b8"><path d="M17.65 6.35A7.958 7.958 0 0012 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>`,
-        'save-icon': `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#fbbf24"><path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/></svg>`,
-        'history-icon': `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#22d3ee"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>`,
-        'add-icon': `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="#22d3ee"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>`,
-        'delete-icon': `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f43f5e"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>`
-    };
-
     html2canvas(captureElement, {
         backgroundColor: document.body.classList.contains('light-mode') ? '#e4e9f0' : '#0b1120',
         scale: 2,
         onclone: (clonedDoc) => {
+            // 1. تزييف حالة المؤقت في الصورة المنسوخة فقط (ليظهر كأنه متوقف)
+            const clonedMainBtn = clonedDoc.getElementById('mainBtn');
+            const clonedMainCard = clonedDoc.getElementById('mainCard');
+            
+            if (clonedMainBtn) {
+                // إزالة حالة الإيقاف المؤقت وإضافة حالة التشغيل (اللون الأخضر)
+                clonedMainBtn.classList.remove('pause-state');
+                clonedMainBtn.classList.add('play-state');
+            }
+            
+            if (clonedMainCard) {
+                // إزالة توهج التشغيل وإضافة توهج الإيقاف
+                clonedMainCard.classList.remove('running-glow');
+                clonedMainCard.classList.add('paused-glow');
+            }
+
+            // 2. ربط الأيقونات بصورك المحلية (PNG) لضمان ظهورها في الصورة الملتقطة
+            const iconMap = {
+                'start-icon': 'Start.png',
+                'stop-icon': 'Stop.png', // لن تظهر للأيقونة الرئيسية في الصورة، لكنها كمرجع
+                'restart-icon': 'Restart.png',
+                'save-icon': 'Save.png',
+                'history-icon': 'History.png',
+                'add-icon': 'Add.png',
+                'delete-icon': 'Delete.png'
+            };
+
             const maskedIcons = clonedDoc.querySelectorAll('.icon-mask');
             maskedIcons.forEach(icon => {
-                let svgContent = null;
+                let imgSrc = null;
 
+                // إجبار الأيقونة الرئيسية على إظهار صورة "Start.png" دائماً في السكرين شوت
                 if (icon.id === 'mainIcon') {
-                    if (icon.classList.contains('stop-icon')) {
-                        svgContent = svgIcons['stop-icon'];
-                    } else {
-                        svgContent = svgIcons['start-icon'];
-                    }
+                    imgSrc = 'Start.png';
                 } else {
-                    for (const [className, svg] of Object.entries(svgIcons)) {
+                    // جلب اسم الصورة الصحيح لباقي الأيقونات بناءً على الكلاس
+                    for (const [className, fileName] of Object.entries(iconMap)) {
                         if (icon.classList.contains(className)) {
-                            svgContent = svg;
+                            imgSrc = fileName;
                             break;
                         }
                     }
                 }
 
-                if (svgContent) {
-                    icon.style.webkitMaskImage = 'none';
-                    icon.style.maskImage = 'none';
-                    icon.style.backgroundColor = 'transparent';
-                    icon.style.display = 'inline-flex';
-                    icon.style.alignItems = 'center';
-                    icon.style.justifyContent = 'center';
-                    icon.innerHTML = svgContent;
+                if (imgSrc) {
+                    // إنشاء عنصر صورة (img) حقيقي لكي تلتقطه المكتبة بدلاً من الـ (mask)
+                    const img = clonedDoc.createElement('img');
+                    img.src = imgSrc;
+                    
+                    // تحديد أبعاد الصور بناءً على الأيقونة لضمان عدم تشوه المقاسات في السكرين شوت
+                    if (icon.id === 'mainIcon' || icon.classList.contains('restart-icon')) {
+                        img.style.width = '35px';
+                    } else if (icon.classList.contains('history-icon') || icon.classList.contains('add-icon')) {
+                        img.style.width = '28px';
+                    } else if (icon.classList.contains('delete-icon')) {
+                        img.style.width = '16px';
+                    } else {
+                        img.style.width = '20px'; // للأيقونات مثل الحفظ
+                    }
+                    
+                    img.style.objectFit = 'contain';
+                    
+                    // استبدال عنصر الـ (mask) الفارغ بعنصر الصورة الجديد داخل النسخة الوهمية
+                    icon.parentNode.replaceChild(img, icon);
                 }
             });
         }
